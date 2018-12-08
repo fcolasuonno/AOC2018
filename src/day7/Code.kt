@@ -23,7 +23,6 @@ fun parse(input: List<String>) = input.map {
     }
 }.requireNoNulls().groupBy { it.first }.mapValues {
     Step(it.key, it.value.map { it.second }.toSet())
-
 }
 
 fun part1(input: Map<Char, Step>): Any? {
@@ -43,17 +42,15 @@ fun part1(input: Map<Char, Step>): Any? {
     return output.joinToString("")
 }
 
-private fun <E> TreeSet<E>.pop(num: Int): List<E> {
+private fun <E> TreeSet<E>.pop(num: Int) = iterator().run {
     val out = mutableListOf<E>()
-    val iterator = this.iterator()
-    for (i in 0 until num) {
-        if (iterator.hasNext()) {
-            out.add(iterator.next())
-            iterator.remove()
+    repeat(num) {
+        if (hasNext()) {
+            out.add(next())
+            remove()
         }
     }
-
-    return out
+    out
 }
 
 data class WorkingStep(val id: Char, val allow: Set<Char>) {
