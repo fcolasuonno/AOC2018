@@ -9,72 +9,50 @@ fun main(args: Array<String>) {
     val input = File("src/$dir/$name").readLines()
     val parsed = parse(input)
     println("Part 1 = ${part1(parsed)}")
-//    println("Part 2 = ${part2(parsed)}")
+    println("Part 2 = ${part2(parsed)}")
 }
 
-data class Sky(val points: List<Point>) {
-    init {
-        val a = points.map { it.x / it.vx } + points.map { it.y / it.vy }
-    }
+private const val NEIGHBOUR_COUNT = 8
 
-    val minX = -20
-    val minY = -20
+data class Sky(val points: List<Point>, var clock: Int = 0) {
 
-    val maxX = 20
-    val maxY = 20
-
-    var distance = points.sumBy { abs(it.x) + abs(it.y) }
-    fun print() {
-        points.forEach { it.fixupdate(10000) }
-
-        var delta = 0
-        do {
-            points.forEach { it.update() }
-            val newDistance = points.sumBy { abs(it.x) + abs(it.y) }
-            System.err.println(newDistance)
-            delta = distance - newDistance
-            distance = newDistance
-
-        } while (delta > 0)
-        points.forEach { it.revert() }
-        points.forEach { it.revert() }
-        points.forEach { it.revert() }
-        repeat(10) {
-            for (y in points.map { it.y }.let { it.min()!! until it.max()!! }) {
-                for (x in points.map { it.x }.let { it.min()!! until it.max()!! }) {
-
-                    if (points.any { it.x == x && it.y == y }) {
-                        print("#")
-                    } else {
-                        print('.')
-                    }
+    fun findMessage() = buildString {
+        while (!points.haveVerticalLine()) {
+            tick()
+        }
+        val neighbours = points.neighbours()
+        val xRange = neighbours.map { it.x }.let { it.min()!!..it.max()!! }
+        val yRange = neighbours.map { it.y }.let { it.min()!!..it.max()!! }
+        append('\n')
+        for (y in yRange) {
+            for (x in xRange) {
+                if (neighbours.any { it.x == x && it.y == y }) {
+                    append('#')
+                } else {
+                    append(' ')
                 }
-                println()
             }
-            points.forEach { it.update() }
-            println()
-            println()
-            println()
-            println()
-            println()
+            append('\n')
         }
     }
+
+    private fun tick() {
+        points.forEach { it.update() }
+        clock++
+    }
+
+    private fun List<Point>.haveVerticalLine() = any { point ->
+        count { it.x == point.x && (it.y - point.y) in 1..NEIGHBOUR_COUNT } == NEIGHBOUR_COUNT
+    }
+
+    private fun List<Point>.neighbours() = filter { point -> count { abs(it.x - point.x) < NEIGHBOUR_COUNT || abs(it.y - point.y) < NEIGHBOUR_COUNT } > NEIGHBOUR_COUNT }
+
 }
 
 data class Point(var x: Int, var y: Int, val vx: Int, val vy: Int) {
     fun update() {
         x += vx
         y += vy
-    }
-
-    fun revert() {
-        x -= vx
-        y -= vy
-    }
-
-    fun fixupdate(ff: Int) {
-        x += (ff * vx)
-        y += (ff * vy)
     }
 }
 
@@ -87,6 +65,6 @@ fun parse(input: List<String>) = input.map {
     }
 }.requireNoNulls().let { Sky(it) }
 
-fun part1(input: Sky) = input.print()
+fun part1(input: Sky) = input.findMessage()
 
-//fun part2(input: SomeState) = state.s
+fun part2(input: Sky) = input.clock
