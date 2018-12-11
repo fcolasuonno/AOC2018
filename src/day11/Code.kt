@@ -1,82 +1,85 @@
 package day11
 
 import java.io.File
+import kotlin.system.measureTimeMillis
+
+private const val gridSize = 300
 
 fun main(args: Array<String>) {
     val name = if (false) "test.txt" else "input.txt"
     val dir = ::main::class.java.`package`.name
     val input = File("src/$dir/$name").readLines()
     val parsed = parse(input)
-    println("Part 1 = ${part1(parsed, 3)}")
-    println("Part 2 = ${part2(parsed)}")
+    println(measureTimeMillis {
+        println("Part 1 = ${part1(parsed)}")
+        println("Part 2 = ${part2(parsed)}")
+    })
 }
 
 fun parse(input: List<String>) = input.map {
     it.toInt()
-}.first()
-
-private fun createSquare(serial: Int): List<List<Int>> {
-    return List(300 + 1) { x ->
-        List(300 + 1) { y ->
-            powerLevel(x, y, serial)
-        }
-    }
+}.first().let {
+    createSquare(it)
+}.let {
+    generatePyramid(it)
 }
 
 fun powerLevel(x: Int, y: Int, serial: Int): Int {
-    val rackId = x + 10
-    val powerStarts = rackId * y
-    val addingSerial = powerStarts + serial
-    val multiply = addingSerial * rackId
-    val hundreds = multiply.toString().toCharArray().reversedArray().getOrNull(2)?.minus('0') ?: 0
+    val rackId = (x + 1) + 10
+    val hundreds = (((rackId * (y + 1) + serial) * rackId) / 100) % 10
     return hundreds - 5
 }
 
-fun sumPowerCells(
-    x: Int,
-    y: Int,
-    input: List<List<Int>>,
-    size: Int
-): Int {
-    var acc = 0
-    for (i in x..(x + size - 1)) {
-        for (j in y..(y + size - 1)) {
-            acc += input[i][j]
-        }
+fun createSquare(serial: Int) = List(gridSize) { x ->
+    List(gridSize) { y ->
+        powerLevel(x, y, serial)
     }
-    return acc
 }
 
-fun part1(input: Int, size: Int): Pair<Pair<Int, Int>, Int> {
-    val square = createSquare(input)
+fun generatePyramid(square: List<List<Int>>) = generateSequence(square) {
+    val size = square.size - it.size + 1
+    List(it.size - 1) { x ->
+        List(it.size - 1) { y ->
+            val rightSide = (0 until size).sumBy { square[x + size][y + it] }
+            val lowerSide = (0 until size).sumBy { square[x + it][y + size] }
+            it[x][y] + rightSide + lowerSide + square[x + size][y + size]
+        }
+    }
+}
+
+fun findMax(grid: List<List<Int>>): Pair<Int, Int> {
     var max = Int.MIN_VALUE
     var currentMax = Pair(0, 0)
-    for (x in 1..(300 - size + 1)) {
-        for (y in (1..(300 - size + 1))) {
-            val sum = sumPowerCells(x, y, square, size)
-            if (sum > max) {
-                max = sum
-                currentMax = Pair(x, y)
+    for (x in 0 until grid.size) {
+        for (y in 0 until grid.size) {
+            val gridValue = grid[x][y]
+            if (gridValue > max) {
+                max = gridValue
+                currentMax = Pair(x + 1, y + 1)
             }
         }
     }
-    return Pair(currentMax, max)
+    return currentMax
 }
 
-fun part2(input: Int) = (1 until 300).map {
-    val square = createSquare(input)
+fun part1(input: Sequence<List<List<Int>>>) = findMax(input.take(3).last())
+
+fun findTotalMax(pyramid: List<List<List<Int>>>): Triple<Int, Int, Int> {
     var max = Int.MIN_VALUE
-    var currentMax = Pair(0, 0)
-    for (x in 1..(300 - it + 1)) {
-        for (y in (1..(300 - it + 1))) {
-            val sum = sumPowerCells(x, y, square, it)
-            if (sum > max) {
-                max = sum
-                currentMax = Pair(x, y)
+    var currentMax = Triple(0, 0, 0)
+    for (size in 1 until pyramid.size) {
+        val grid = pyramid[size]
+        for (x in 0 until grid.size) {
+            for (y in 0 until grid.size) {
+                val gridValue = grid[x][y]
+                if (gridValue > max) {
+                    max = gridValue
+                    currentMax = Triple(x + 1, y + 1, size + 1)
+                }
             }
         }
     }
-    Pair(Triple(currentMax.first, currentMax.second, it), max)
-}.maxBy {
-    it.second
+    return currentMax
 }
+
+fun part2(input: Sequence<List<List<Int>>>) = findTotalMax(input.takeWhile { it.isNotEmpty() }.toList())
