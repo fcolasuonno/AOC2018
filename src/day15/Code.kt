@@ -102,15 +102,6 @@ open class Fighter(var position: Position, var hp: Int = 200, var attackPower: I
     }
 }
 
-private fun <E> List<MutableList<E>>.with(function: (E) -> String) = buildString {
-    append('\n')
-    for (y in 0 until this@with[0].size) {
-        for (x in 0 until this@with.size) {
-            append(function(this@with[x][y]))
-        }
-        append('\n')
-    }
-}
 
 class Goblin(position: Position) : Fighter(position) {
     override fun toString() = "G($hp)"
