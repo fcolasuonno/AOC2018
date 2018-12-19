@@ -5,7 +5,7 @@ import java.io.File
 private const val debugPrint = false
 
 fun main(args: Array<String>) {
-    val name = if (debugPrint) "test.txt" else "input.txt"
+    val name = if (false) "test.txt" else "input.txt"
     val dir = ::main::class.java.`package`.name
     val input = File("src/$dir/$name").readLines()
     val parsed = parse(input)
@@ -81,6 +81,6 @@ fun part2(parsed: Pair<Int, List<Op>>): Int {
         opcodes.getValue(op.opCode)(mem, op)
         mem[ipIndex]++
     }
-    val factorize = mem[1]
+    val factorize = mem.max()!!
     return (1..factorize).filter { factorize % it == 0 }.sum()
 }
